@@ -6,19 +6,21 @@ arch=('x86_64' 'aarch64')
 url="https://github.com/tenstorrent/tt-smi"
 license=('Apache')
 depends=('python' 'python-tt-tools-common' 'python-rich' 'python-textual' 'python-pydantic')
-makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel')
+makedepends=('uv')
 source=()
 sha256sums=()
 
 build() {
     local _repo_root="${startdir}/../.."
     cd "${_repo_root}"
-    python -m build --wheel --no-isolation
+    export UV_CACHE_DIR="${srcdir}/.uv-cache"
+    uv run --with build --with setuptools --with wheel python -m build --wheel --no-isolation
 }
 
 package() {
     local _repo_root="${startdir}/../.."
     cd "${_repo_root}"
-    python -m installer --destdir="${pkgdir}" dist/*.whl
+    export UV_CACHE_DIR="${srcdir}/.uv-cache"
+    uv run --with installer python -m installer --destdir="${pkgdir}" dist/*.whl
     install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }

@@ -1,0 +1,37 @@
+name: Build Arch Package
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build-arch:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base-devel
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build tooling
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm git sudo
+
+      - name: Build package with makepkg
+        run: |
+          useradd -m builder
+          chown -R builder:builder "${GITHUB_WORKSPACE}"
+          su builder -c "cd ${GITHUB_WORKSPACE}/packaging/arch && makepkg --syncdeps --cleanbuild --clean --noconfirm"
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tt-smi-arch-packages
+          path: |
+            packaging/arch/*.pkg.tar.*
+            packaging/arch/*.src.tar.*
+          if-no-files-found: error
